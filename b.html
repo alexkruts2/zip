@@ -1,0 +1,101 @@
+<html lang="en">
+<head>
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+
+<script> 
+var $log;
+var fileText;
+$(function(){
+$log = $("#log");
+
+
+});
+var openFile = function(event) {
+	var input = event.target;
+	var reader = new FileReader();
+	reader.onload = function(){
+		var text = reader.result;
+		fileText = text;
+		var fileName = input.files[0].name;
+		//download(fileName,reader.result);
+		var  html = $.parseHTML( text ),nodeNames = [];
+		var words = [];
+		$.each( html, function( i, el ) {
+			if(el.nodeName!=='#text'){
+				//words = words.concat(getLastElement(el));
+				var texts = el.innerText.split("\n");
+				for(var i = 0 ; i < texts.length; i++){
+					if(isAlphaNumeric(texts[i])){
+						var temp = texts[i].trim();
+						if(!temp.startsWith('{{')&&!words.includes(temp)){
+							var items = temp.split('/');
+							for(var j=0; j<items.length;j++){
+								if(!words.includes(items[j]))
+									words.push(items[j]);
+							}
+						}
+							
+					}
+				}
+			}
+		});
+		console.log(words);
+		for(var i = 0 ; i < words.length; i++){
+			var replaceText = generateHtml(words[i]);
+			fileText = fileText.split(words[i]).join(replaceText);
+			$log.append(generateKey(words[i])+':"' + words[i]+'", <br>');
+		}
+		download(fileName,fileText);
+	};
+	reader.readAsText(input.files[0]);
+};
+
+function isAlphaNumeric(str) {
+  var code, i, len;
+	if(str.length<1) return false;
+  for (i = 0, len = str.length; i < len; i++) {
+    code = str.charCodeAt(i);
+    if ((code > 47 && code < 58) || // numeric (0-9)
+        (code > 64 && code < 91) || // upper alpha (A-Z)
+        (code > 96 && code < 123)) { // lower alpha (a-z)
+      return true;
+    }
+  }
+  return false;
+};
+function download(filename, text) {
+    var pom = document.createElement('a');
+    pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    pom.setAttribute('download', filename);
+
+    if (document.createEvent) {
+        var event = document.createEvent('MouseEvents');
+        event.initEvent('click', true, true);
+        pom.dispatchEvent(event);
+    }
+    else {
+        pom.click();
+    }
+}
+function generateKey(param){
+	result = param.replace(/ /g,'_');
+	result = result.replace(/-/g,'_');
+	//result = result.replace(/-/g,'_');
+	result = result.split('/').join('_');
+	return result;
+}
+function generateHtml(param){
+	result = "{{ '"+generateKey(param)+"' || translate }}";
+	return result;
+}
+
+</script>
+</head>
+<body>
+    <input type='file' accept='*' onchange='openFile(event)'><br>
+<div id="log">
+  <h3>Content:</h3>
+</div>
+
+</body>
+</html>

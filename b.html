@@ -17,17 +17,15 @@ var openFile = function(event) {
 		var text = reader.result;
 		fileText = text;
 		var fileName = input.files[0].name;
-		//download(fileName,reader.result);
 		var  html = $.parseHTML( text ),nodeNames = [];
 		var words = [];
 		$.each( html, function( i, el ) {
 			if(el.nodeName!=='#text'){
-				//words = words.concat(getLastElement(el));
 				var texts = el.innerText.split("\n");
 				for(var i = 0 ; i < texts.length; i++){
 					if(isAlphaNumeric(texts[i])){
 						var temp = texts[i].trim();
-						if(!temp.startsWith('{{')&&!words.includes(temp)){
+						if(!temp.includes('{{')&&!words.includes(temp)){
 							var items = temp.split('/');
 							for(var j=0; j<items.length;j++){
 								if(!words.includes(items[j]))
@@ -42,7 +40,15 @@ var openFile = function(event) {
 		console.log(words);
 		for(var i = 0 ; i < words.length; i++){
 			var replaceText = generateHtml(words[i]);
-			fileText = fileText.split(words[i]).join(replaceText);
+			//fileText = fileText.split(words[i]).join(replaceText);
+			var indexs = getIndicesOf(words[i],fileText,1);
+			while(indexs.length>0){
+				fileText = fileText.substr(0,indexs[0])+
+						replaceText+
+						fileText.substr(indexs[0]+words[i].length,fileText.length-words[i].length-indexs[0]);
+				indexs = getIndicesOf(words[i],fileText,1);
+			}
+			
 			$log.append(generateKey(words[i])+':"' + words[i]+'", <br>');
 		}
 		download(fileName,fileText);
@@ -87,6 +93,24 @@ function generateKey(param){
 function generateHtml(param){
 	result = "{{ '"+generateKey(param)+"' || translate }}";
 	return result;
+}
+function getIndicesOf(searchStr, str, caseSensitive) {
+    var searchStrLen = searchStr.length;
+    if (searchStrLen == 0) {
+        return [];
+    }
+    var startIndex = 0, index, indices = [];
+    if (!caseSensitive) {
+        str = str.toLowerCase();
+        searchStr = searchStr.toLowerCase();
+    }
+    while ((index = str.indexOf(searchStr, startIndex)) > -1) {
+		if(!isAlphaNumeric(str.substr(index-1,1)))
+			if(!(str.substr(index-1,1)=="'" && str.substr(index+searchStr.length,14)=="' || translate"))
+				indices.push(index);
+        startIndex = index + searchStrLen;
+    }
+    return indices;
 }
 
 </script>

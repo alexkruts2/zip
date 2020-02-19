@@ -1,5 +1,5 @@
 <?php
-$dir    = 'D:/cp/src/collaborative-planning-v8.0.1.0-src/collaborative-planning-v8.0.1.0/utc-webapp/src/main/webapp/adminApp/js/modules/';
+$dir    = 'C:///xampp/htdocs/webapp/adminApp/js/modules/';
 $folders = scandir($dir);
 $result = [];
 for($i=2; $i<count($folders); $i++){
@@ -9,7 +9,7 @@ for($i=2; $i<count($folders); $i++){
 		array_push($result,array($folders[$i]."/views/"=>$temp));
 	}
 }
-echo json_encode($result);
+//echo json_encode($result);
 
 ?>
 
@@ -25,13 +25,15 @@ var files = $.parseJSON('<?php echo json_encode($result);?>');
 $(function(){
 $log = $("#log");
 	for(var i = 0 ; i < files.length; i++){
-		//console.log(files[i]);
 		var path = Object.keys(files[i])[0];
 		var filesInPath = files[i][path];
 		for(var j=0; j < filesInPath.length; j++){
 			var fullPath = 'webapp/adminApp/js/modules/'+path+filesInPath[j]
 			readTextFile(fullPath);
 		}
+	}
+	for(var i = 0 ; i < words.length; i++){
+		$log.append(generateKey(words[i])+':"' + words[i]+'", <br>');
 	}
 
 });
@@ -47,7 +49,7 @@ function getWordsInGlobalVariable(param){
 					if(!temp.includes('{{')&&!words.includes(temp)){
 						var items = temp.split('/');
 						for(var j=0; j<items.length;j++){
-							if(!words.includes(items[j]))
+							if(!words.includes(generateKey(items[j])))
 								words.push(items[j]);
 						}
 					}
@@ -70,51 +72,7 @@ function getTraslateText(param){
 	}
 	return fileText;
 }
-var openFile = function(event) {
-	var input = event.target;
-	var reader = new FileReader();
-	reader.onload = function(){
-		var text = reader.result;
-		fileText = text;
-		var fileName = input.files[0].name;
-		var  html = $.parseHTML( text ),nodeNames = [];
-		var words = [];
-		$.each( html, function( i, el ) {
-			if(el.nodeName!=='#text'){
-				var texts = el.innerText.split("\n");
-				for(var i = 0 ; i < texts.length; i++){
-					if(isAlphaNumeric(texts[i])){
-						var temp = texts[i].trim();
-						if(!temp.includes('{{')&&!words.includes(temp)){
-							var items = temp.split('/');
-							for(var j=0; j<items.length;j++){
-								if(!words.includes(items[j]))
-									words.push(items[j]);
-							}
-						}
-							
-					}
-				}
-			}
-		});
-		console.log(words);
-		for(var i = 0 ; i < words.length; i++){
-			var replaceText = generateHtml(words[i]);
-			//fileText = fileText.split(words[i]).join(replaceText);
-			var indexs = getIndicesOf(words[i],fileText,1);
-			while(indexs.length>0){
-				fileText = fileText.substr(0,indexs[0])+
-						replaceText+
-						fileText.substr(indexs[0]+words[i].length,fileText.length-words[i].length-indexs[0]);
-				indexs = getIndicesOf(words[i],fileText,1);
-			}
-			
-			$log.append(generateKey(words[i])+':"' + words[i]+'", <br>');
-		}
-		download(fileName,fileText);
-	};
-	reader.readAsText(input.files[0]);
-};
+
 function readTextFile(file)
 {
     var rawFile = new XMLHttpRequest();
@@ -173,9 +131,11 @@ function download(filename, text) {
     }
 }
 function generateKey(param){
+	param = param.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g,'_');
+
 	result = param.replace(/ /g,'_');
 	result = result.replace(/-/g,'_');
-	//result = result.replace(/-/g,'_');
+	
 	result = result.split('/').join('_');
 	return result;
 }

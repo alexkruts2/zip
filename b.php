@@ -172,3 +172,4 @@ function getIndicesOf(searchStr, str, caseSensitive) {
 
 </body>
 </html>
+https://codelabs.developers.google.com/codelabs/cloud-translation-intro/index.html#0
